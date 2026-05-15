@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <!-- STREAMING_CHUNK:Konfigurasi Metadata dan Font -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base target="_top">
+    <title>SIGAP HUMAS - Lapas Rangkasbitung</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        .bg-navy { background-color: #1e3a8a; }
+        .text-navy { color: #1e3a8a; }
+        .bg-gold { background-color: #facc15; }
+        .border-gold { border-color: #facc15; }
+        .sidebar-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 overflow-x-hidden">
+
+    <!-- STREAMING_CHUNK:Halaman Login -->
+    <div id="loginPage" class="fixed inset-0 z-[100] flex items-center justify-center bg-navy p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden p-8 border-b-8 border-gold">
+            <div class="text-center mb-8">
+                <div class="inline-block p-4 bg-slate-100 rounded-full mb-4">
+                    <i data-lucide="shield-check" class="w-12 h-12 text-navy"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-navy">SIGAP HUMAS</h1>
+                <p class="text-slate-500 text-sm">Sistem Digital Arsip Humas Lapas Rangkasbitung</p>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">USERNAME</label>
+                    <input type="text" id="username" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-navy focus:border-transparent transition" placeholder="Masukkan username">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">PASSWORD</label>
+                    <input type="password" id="password" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-navy focus:border-transparent transition" placeholder="••••••••">
+                </div>
+                <button onclick="handleLogin()" id="btnLogin" class="w-full py-4 bg-navy text-white font-bold rounded-xl shadow-lg hover:bg-blue-900 transition-all flex justify-center items-center">
+                    MASUK KE SISTEM
+                </button>
+                <div id="loginError" class="hidden p-3 bg-red-100 text-red-600 text-xs rounded-lg text-center">
+                    Username atau password tidak valid!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STREAMING_CHUNK:Layout Utama Aplikasi -->
+    <div id="mainApp" class="hidden flex min-h-screen">
+        
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar-transition w-72 bg-navy text-white flex flex-col fixed h-full z-50">
+            <div class="p-6 flex flex-col items-center border-b border-blue-900/50">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/e/e0/Logo_Kementerian_Hukum_dan_HAM_RI.png" class="h-16 w-auto mb-3" alt="Logo Kemenkumham">
+                <div class="text-center">
+                    <h2 class="font-bold text-lg leading-tight text-gold">SIGAP HUMAS</h2>
+                    <p class="text-[10px] opacity-70 tracking-widest uppercase">Lapas Rangkasbitung</p>
+                </div>
+            </div>
+
+            <nav class="flex-1 p-4 space-y-2 custom-scrollbar overflow-y-auto">
+                <button onclick="switchTab('dashboard')" class="nav-link flex items-center w-full p-4 rounded-xl hover:bg-white/10 transition group" id="btn-dashboard">
+                    <i data-lucide="layout-grid" class="w-5 h-5 mr-3 text-gold"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button onclick="switchTab('archive')" class="nav-link flex items-center w-full p-4 rounded-xl hover:bg-white/10 transition group" id="btn-archive">
+                    <i data-lucide="folder-search" class="w-5 h-5 mr-3 text-gold"></i>
+                    <span>Daftar Arsip</span>
+                </button>
+                <button onclick="switchTab('favorites')" class="nav-link flex items-center w-full p-4 rounded-xl hover:bg-white/10 transition group" id="btn-favorites">
+                    <i data-lucide="star" class="w-5 h-5 mr-3 text-gold"></i>
+                    <span>Favorit Arsip</span>
+                </button>
+                <div class="pt-6 pb-2 px-4 text-[10px] font-bold text-blue-300 tracking-wider">MANAJEMEN</div>
+                <button onclick="openUploadModal()" class="flex items-center w-full p-4 rounded-xl bg-gold text-navy font-bold hover:brightness-110 transition shadow-lg">
+                    <i data-lucide="plus-circle" class="w-5 h-5 mr-3"></i>
+                    <span>Upload Baru</span>
+                </button>
+            </nav>
+
+            <div class="p-4 border-t border-blue-900/50">
+                <button onclick="logout()" class="flex items-center w-full p-4 rounded-xl hover:bg-red-500/20 text-red-300 transition">
+                    <i data-lucide="log-out" class="w-5 h-5 mr-3"></i>
+                    <span>Keluar</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Wrapper -->
+        <main class="flex-1 ml-72 sidebar-transition flex flex-col">
+            
+            <!-- STREAMING_CHUNK:Top Navigation -->
+            <header class="bg-white border-b border-slate-200 h-20 sticky top-0 z-40 flex items-center justify-between px-8 shadow-sm">
+                <div class="flex items-center flex-1 max-w-xl">
+                    <div class="relative w-full">
+                        <i data-lucide="search" class="w-5 h-5 absolute left-4 top-3 text-slate-400"></i>
+                        <input type="text" onkeyup="globalSearch(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-2.5 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-navy/5 focus:border-navy transition" placeholder="Cari nama dokumen, jenis, atau tanggal...">
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-6">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-sm font-bold text-navy" id="userNameDisplay">User</p>
+                        <p class="text-[10px] text-slate-400 uppercase font-bold" id="userRoleDisplay">Staf</p>
+                    </div>
+                    <div class="w-12 h-12 bg-navy rounded-full flex items-center justify-center text-white font-bold border-2 border-gold shadow-md">
+                        <span id="userInitial">U</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- STREAMING_CHUNK:Halaman Dashboard Utama -->
+            <section id="dashboardSection" class="p-8 space-y-8">
+                <!-- Welcome Section -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-navy">Selamat Datang di SIGAP!</h2>
+                        <p class="text-slate-500">Berikut adalah ringkasan data humas hari ini.</p>
+                    </div>
+                    <div class="bg-white px-6 py-3 rounded-2xl shadow-sm border border-slate-100 text-center">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">WAKTU SISTEM</p>
+                        <p class="text-lg font-bold text-navy" id="currentTime">--:--:--</p>
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center space-x-4">
+                        <div class="p-4 bg-blue-50 rounded-2xl text-navy">
+                            <i data-lucide="database" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase">Total Arsip</p>
+                            <h3 class="text-2xl font-bold text-navy">1,284</h3>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center space-x-4">
+                        <div class="p-4 bg-gold/10 rounded-2xl text-gold">
+                            <i data-lucide="clock" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase">Hari Ini</p>
+                            <h3 class="text-2xl font-bold text-navy">12</h3>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center space-x-4">
+                        <div class="p-4 bg-green-50 rounded-2xl text-green-600">
+                            <i data-lucide="image" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase">Media</p>
+                            <h3 class="text-2xl font-bold text-navy">842</h3>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center space-x-4">
+                        <div class="p-4 bg-purple-50 rounded-2xl text-purple-600">
+                            <i data-lucide="file-text" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase">Dokumen</p>
+                            <h3 class="text-2xl font-bold text-navy">430</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts and Monitoring -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Chart -->
+                    <div class="lg:col-span-2 bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+                        <div class="flex items-center justify-between mb-6">
+                            <h4 class="font-bold text-navy">Grafik Dokumentasi Humas</h4>
+                            <select class="text-xs bg-slate-100 rounded-lg p-2 border-none">
+                                <option>7 Hari Terakhir</option>
+                                <option>30 Hari Terakhir</option>
+                            </select>
+                        </div>
+                        <canvas id="archiveChart" height="150"></canvas>
+                    </div>
+
+                    <!-- Aktivitas Terbaru -->
+                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 flex flex-col h-full">
+                        <h4 class="font-bold text-navy mb-6">Aktivitas Terbaru</h4>
+                        <div class="space-y-6 flex-1 overflow-y-auto custom-scrollbar">
+                            <div class="flex items-start space-x-3">
+                                <div class="w-2 h-2 rounded-full bg-navy mt-1.5 shadow-sm"></div>
+                                <div>
+                                    <p class="text-xs font-bold">Upload Foto Kegiatan Klapas</p>
+                                    <p class="text-[10px] text-slate-400">10 Menit yang lalu • Oleh Budi</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-3">
+                                <div class="w-2 h-2 rounded-full bg-gold mt-1.5 shadow-sm"></div>
+                                <div>
+                                    <p class="text-xs font-bold">Edit Laporan Rilis Berita</p>
+                                    <p class="text-[10px] text-slate-400">2 Jam yang lalu • Oleh Admin</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-3">
+                                <div class="w-2 h-2 rounded-full bg-green-500 mt-1.5 shadow-sm"></div>
+                                <div>
+                                    <p class="text-xs font-bold">Upload Video Pembinaan WBP</p>
+                                    <p class="text-[10px] text-slate-400">Kemarin • Oleh Ani</p>
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="switchTab('archive')" class="mt-6 w-full py-3 bg-slate-50 text-navy text-[10px] font-bold rounded-xl hover:bg-slate-100 transition tracking-widest uppercase">
+                            Lihat Semua Aktivitas
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STREAMING_CHUNK:Daftar Arsip (Tabel) -->
+            <section id="archiveSection" class="hidden p-8">
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="p-8 border-b border-slate-100 flex items-center justify-between">
+                        <div>
+                            <h3 class="text-xl font-bold text-navy">Database Digital Arsip</h3>
+                            <p class="text-sm text-slate-400">Daftar dokumen yang tersimpan secara permanen</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-200 transition">Download Excel</button>
+                            <button onclick="refreshTable()" class="p-2 bg-navy text-white rounded-lg hover:bg-blue-900 transition shadow-md">
+                                <i data-lucide="rotate-cw" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-slate-50 text-slate-500 text-[10px] uppercase font-bold tracking-wider">
+                                <tr>
+                                    <th class="px-8 py-4 text-left">Nama Dokumen</th>
+                                    <th class="px-8 py-4 text-left">Tanggal</th>
+                                    <th class="px-8 py-4 text-left">Jenis</th>
+                                    <th class="px-8 py-4 text-left">Kategori</th>
+                                    <th class="px-8 py-4 text-left">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="archiveTableBody" class="divide-y divide-slate-50">
+                                <!-- Data Baris -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STREAMING_CHUNK:Footer -->
+            <footer class="mt-auto p-8 border-t border-slate-200 bg-white">
+                <div class="flex flex-col md:flex-row justify-between items-center text-slate-400 text-xs">
+                    <p>&copy; 2026 <strong>LAPAS KELAS III RANGKASBITUNG</strong>. Seluruh Hak Cipta Dilindungi.</p>
+                    <div class="flex space-x-4 mt-4 md:mt-0">
+                        <span class="font-bold text-navy">SIGAP HUMAS v2.1.0</span>
+                        <span>Sistem Terintegrasi Google Drive</span>
+                    </div>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <!-- STREAMING_CHUNK:Modal Upload Baru -->
+    <div id="uploadModal" class="hidden fixed inset-0 z-[60] bg-navy/60 backdrop-blur-sm p-4 flex items-center justify-center">
+        <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden sidebar-transition">
+            <div class="p-6 bg-navy text-white flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i data-lucide="cloud-upload" class="w-6 h-6 text-gold"></i>
+                    <h3 class="font-bold">Input Dokumentasi Baru</h3>
+                </div>
+                <button onclick="closeUploadModal()" class="p-2 hover:bg-white/10 rounded-full transition">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <div class="p-8 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Nama Kegiatan</label>
+                            <input type="text" id="up_name" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-navy transition" placeholder="Contoh: Kunjungan Kanwil">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Tanggal Kegiatan</label>
+                            <input type="date" id="up_date" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-navy transition">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Pilih Kategori</label>
+                            <select id="up_category" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-navy transition">
+                                <option>Kegiatan Kepala Lapas</option>
+                                <option>Pembinaan WBP</option>
+                                <option>Humas</option>
+                                <option>Pengamanan</option>
+                                <option>Kunjungan</option>
+                                <option>Kegiatan Hari Besar</option>
+                                <option>Dokumentasi Internal</option>
+                                <option>Apel</option>
+                                <option>Rapat</option>
+                                <option>Lainnya</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Berita Rilis / Caption</label>
+                            <textarea id="up_caption" rows="4" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-navy transition resize-none" placeholder="Masukkan narasi rilis berita atau caption kegiatan..."></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Jenis Media</label>
+                            <div class="flex space-x-3">
+                                <label class="flex-1 flex items-center justify-center p-3 border-2 border-slate-100 rounded-xl cursor-pointer hover:border-navy hover:bg-navy/5 transition group">
+                                    <input type="radio" name="media" value="Foto" class="hidden" checked>
+                                    <i data-lucide="image" class="w-4 h-4 mr-2"></i> Foto
+                                </label>
+                                <label class="flex-1 flex items-center justify-center p-3 border-2 border-slate-100 rounded-xl cursor-pointer hover:border-navy hover:bg-navy/5 transition group">
+                                    <input type="radio" name="media" value="Video" class="hidden">
+                                    <i data-lucide="video" class="w-4 h-4 mr-2"></i> Video
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 bg-slate-50 rounded-2xl border border-dashed border-slate-300 text-center">
+                    <p class="text-xs text-slate-500 mb-2">Simpan otomatis ke Google Drive</p>
+                    <button onclick="submitUpload()" class="w-full py-4 bg-navy text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all flex items-center justify-center">
+                        <i data-lucide="check-circle" class="w-5 h-5 mr-3 text-gold"></i> SIMPAN & GENERATE LINK DRIVE
+                    </button>
+                    <p class="text-[9px] text-slate-400 mt-3 uppercase font-bold">Tersimpan di: Google Drive SIGAP / ${up_category}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STREAMING_CHUNK:JavaScript Interaktif -->
+    <script>
+        // STREAMING_CHUNK:Inisialisasi & Konfigurasi State
+        const DRIVE_FOLDER_URL = "https://drive.google.com/drive/folders/1xR_v7D_r9A-Qo0l88tmrSM6kTQ5h6MUg?usp=sharing";
+        let currentUser = null;
+        let archiveData = [
+            ["1", "Apel Pagi Pegawai Senin", "2026-05-10", "Dokumen", "Apel", "Laporan rutin", DRIVE_FOLDER_URL, false],
+            ["2", "Pembinaan Kemandirian Las", "2026-05-11", "Foto", "Pembinaan WBP", "Dokumentasi bengkel kerja", DRIVE_FOLDER_URL, true],
+            ["3", "Kunjungan Monitoring Kanwil", "2026-05-12", "Video", "Kunjungan", "Video dokumentasi kedatangan", DRIVE_FOLDER_URL, false],
+            ["4", "Rapat internal Humas", "2026-05-13", "Dokumen", "Rapat", "Notulen rapat bulanan", DRIVE_FOLDER_URL, false]
+        ];
+
+        // STREAMING_CHUNK:Logika Autentikasi
+        function handleLogin() {
+            const userInput = document.getElementById('username').value;
+            const passInput = document.getElementById('password').value;
+            const btn = document.getElementById('btnLogin');
+
+            if (!userInput || !passInput) return;
+
+            btn.disabled = true;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i>';
+            lucide.createIcons();
+
+            // Simulasi backend
+            setTimeout(() => {
+                if (userInput === 'admin' && passInput === 'admin123') {
+                    successLogin({ nama: 'Administrator', role: 'Admin' });
+                } else if (userInput === 'user' && passInput === 'user123') {
+                    successLogin({ nama: 'Staf Humas', role: 'User' });
+                } else {
+                    document.getElementById('loginError').classList.remove('hidden');
+                    btn.disabled = false;
+                    btn.innerText = 'MASUK KE SISTEM';
+                }
+            }, 1000);
+        }
+
+        function successLogin(data) {
+            currentUser = data;
+            document.getElementById('loginPage').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('userNameDisplay').innerText = data.nama;
+            document.getElementById('userRoleDisplay').innerText = data.role;
+            document.getElementById('userInitial').innerText = data.nama.charAt(0);
+            initDashboard();
+        }
+
+        function logout() {
+            location.reload();
+        }
+
+        // STREAMING_CHUNK:Navigasi & UI
+        function switchTab(tab) {
+            const sections = ['dashboardSection', 'archiveSection'];
+            sections.forEach(s => document.getElementById(s).classList.add('hidden'));
+            
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('bg-white/10', 'border-r-4', 'border-gold'));
+            
+            if (tab === 'dashboard') {
+                document.getElementById('dashboardSection').classList.remove('hidden');
+                document.getElementById('btn-dashboard').classList.add('bg-white/10', 'border-r-4', 'border-gold');
+            } else if (tab === 'archive') {
+                document.getElementById('archiveSection').classList.remove('hidden');
+                document.getElementById('btn-archive').classList.add('bg-white/10', 'border-r-4', 'border-gold');
+                renderArchiveTable(archiveData);
+            }
+            lucide.createIcons();
+        }
+
+        function openUploadModal() {
+            document.getElementById('uploadModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.add('hidden');
+        }
+
+        // STREAMING_CHUNK:Pengolahan Data & Grafik
+        function initDashboard() {
+            lucide.createIcons();
+            initClock();
+            initChart();
+            switchTab('dashboard');
+        }
+
+        function initClock() {
+            setInterval(() => {
+                const now = new Date();
+                document.getElementById('currentTime').innerText = now.toLocaleTimeString('id-ID');
+            }, 1000);
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('archiveChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
+                    datasets: [{
+                        label: 'Upload Dokumentasi',
+                        data: [12, 19, 15, 25, 22, 10, 5],
+                        borderColor: '#1e3a8a',
+                        backgroundColor: 'rgba(30, 58, 138, 0.05)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#facc15'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { display: false } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function renderArchiveTable(data) {
+            const tbody = document.getElementById('archiveTableBody');
+            tbody.innerHTML = '';
+
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/80 transition";
+                tr.innerHTML = `
+                    <td class="px-8 py-4">
+                        <div class="flex items-center">
+                            <i data-lucide="${row[3] === 'Foto' ? 'image' : row[3] === 'Video' ? 'video' : 'file-text'}" class="w-4 h-4 mr-3 text-navy opacity-40"></i>
+                            <span class="text-sm font-semibold text-navy">${row[1]}</span>
+                        </div>
+                    </td>
+                    <td class="px-8 py-4 text-xs text-slate-500 font-medium">${row[2]}</td>
+                    <td class="px-8 py-4">
+                        <span class="text-[10px] px-2 py-1 rounded bg-slate-100 text-slate-600 font-bold uppercase">${row[3]}</span>
+                    </td>
+                    <td class="px-8 py-4 text-xs font-semibold text-navy/70">${row[4]}</td>
+                    <td class="px-8 py-4">
+                        <div class="flex items-center space-x-2">
+                            <a href="${row[6]}" target="_blank" class="p-2 hover:bg-blue-50 rounded-lg text-navy transition" title="Lihat">
+                                <i data-lucide="eye" class="w-4 h-4"></i>
+                            </a>
+                            <a href="${row[6]}" download class="p-2 hover:bg-gold/10 rounded-lg text-gold transition" title="Unduh">
+                                <i data-lucide="download" class="w-4 h-4"></i>
+                            </a>
+                            ${currentUser.role === 'Admin' ? `
+                                <button onclick="deleteDoc('${row[0]}')" class="p-2 hover:bg-red-50 rounded-lg text-red-500 transition" title="Hapus">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        function globalSearch(query) {
+            const lowerQuery = query.toLowerCase();
+            const filtered = archiveData.filter(row => 
+                row[1].toLowerCase().includes(lowerQuery) || 
+                row[3].toLowerCase().includes(lowerQuery) ||
+                row[2].includes(lowerQuery)
+            );
+            renderArchiveTable(filtered);
+        }
+
+        function submitUpload() {
+            const name = document.getElementById('up_name').value;
+            const cat = document.getElementById('up_category').value;
+            const date = document.getElementById('up_date').value;
+            const type = document.querySelector('input[name="media"]:checked').value;
+
+            if(!name || !date) return alert('Mohon lengkapi data!');
+
+            // Mock saving
+            const newId = (archiveData.length + 1).toString();
+            archiveData.unshift([newId, name, date, type, cat, "-", DRIVE_FOLDER_URL, false]);
+            
+            closeUploadModal();
+            alert('Berhasil tersimpan ke Google Drive!');
+            if (document.getElementById('archiveSection').classList.contains('hidden')) {
+                switchTab('archive');
+            } else {
+                renderArchiveTable(archiveData);
+            }
+        }
+
+        // Inisialisasi awal saat window dimuat
+        window.onload = () => {
+            lucide.createIcons();
+        };
+
+    </script>
+</body>
+</html>
